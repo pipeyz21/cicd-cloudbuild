@@ -17,3 +17,8 @@ steps:
     id: 'unit-tests'
     entrypoint: 'pytest'
     args: ['tests/unit/', '-v']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '300s'

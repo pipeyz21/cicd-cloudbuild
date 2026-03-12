@@ -22,3 +22,6 @@ steps:
   - name: 'deploy-notify'
     id: 'notify-success'
     args: ['echo', 'Deployment successful!']
+
+options:
+  logging: CLOUD_LOGGING_ONLY
