@@ -2,8 +2,6 @@
 # ==== Dependencias CI/CD ====
 # ============================
 apache-airflow==2.10.5
-pytest==9.0.2
-flake8==7.0.0
 
 # =============================
 # === Dependencias Composer ===
