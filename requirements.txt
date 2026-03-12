@@ -1,0 +1,31 @@
+# ============================
+# ==== Dependencias CI/CD ====
+# ============================
+apache-airflow==2.10.5
+pytest==9.0.2
+flake8==7.0.0
+
+# =============================
+# === Dependencias Composer ===
+# =============================
+# pandas==2.1.4
+# requests==2.32.3
+# numpy==1.26.4
+# pyarrow==16.1.0
+# openpyxl==3.1.5
+google-cloud-bigquery==3.27.0
+google-auth==2.36.0
+google-auth-oauthlib==1.2.1
+# pyodbc==5.2.0
+# pymssql==2.3.4
+# Office365-REST-Python-Client==2.5.5
+# openai==1.79.0
+# PyPDF2==3.0.1
+# pysftp==0.2.9
+# croniter==5.0.1
+# cython==3.1.1
+# unidecode==1.4.0
+# google-cloud-dataform==0.5.13
+apache-airflow-providers-google==10.26.0
+# pyrfc==3.4
+

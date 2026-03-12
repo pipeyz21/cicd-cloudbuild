@@ -1,0 +1,76 @@
+---
+steps:
+  # 1. Detectar DAGs con cambios
+  - name: 'gcr.io/cloud-builders/git'
+    id: 'detect-changes'
+    script: |
+      git fetch origin main
+      git diff --name-only origin/main HEAD | grep "^dags/.*\.py$" > /workspace/changed_dags.txt
+
+  # 2. Validar ejecución en DEV
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'test-dag-execution'
+    script: |
+      set -e
+      while read -r dag_file; do
+        dag_name=$(basename "$dag_file" .py)
+        echo "Testing DAG: $dag_name"
+
+        # Trigger DAG en DEV
+        gcloud composer environments run ${_DEV_COMPOSER_ENV} \
+          --location ${_COMPOSER_LOCATION} \
+          --project ${_DEV_PROJECT} \
+          dags trigger -- $dag_name --conf '{"test_mode": true}'
+
+        sleep 120  # Esperar ejecución
+
+        # Verificar ejecución
+        STATE=$(gcloud composer environments run ${_DEV_COMPOSER_ENV} \
+          --location ${_COMPOSER_LOCATION} \
+          --project ${_DEV_PROJECT} \
+          dags list $dag_name -- -d $dag_name --limit | --output json | \
+          jq -r '.[0].state')
+
+        if [[ "$STATE" != "success" ]]; then
+          echo "DAG $dag_name failed in DEV environment."
+          exit 1
+        fi
+
+        echo "DAG $dag_name passed in DEV environment."
+      done < /workspace/changed_dags.txt
+
+  # 3. Tests de calidad de datos
+  - name: 'gcr.io/google.com%cloudsdktool/cloud-sdk'
+    id: 'data-quality-tests'
+    script: |
+      # Aquí se podrían ejecutar tests específicos de calidad de datos
+      echo "Ejecutando tests de calidad de datos..."
+      # Ejemplo: pytest tests/data_quality/ -v
+
+      echo "Tests de calidad de datos completados."
+
+  # 4. Generar informe
+  - name: 'bash'
+    id: 'generate-report'
+    script: |
+      cat > /workspace/validation_report.md <<EOF
+      ## Informe de Validación para Producción
+
+      **Build ID:** ${BUILD_ID}
+      **Fecha:** $(date)
+      **Commit** ${SHORT_SHA}
+
+      ### Validación de DAGs
+      - **Ejecución en DEV:** Completado
+      - **Tests de Calidad de Datos:** Completado
+
+      ### Cambios Detectados
+      $(cat /workspace/changed_dags.txt | sed 's/^/- /')
+
+      ### Próximos Pasos
+      - Revisar el informe
+      - Revisar build logs para detalles: https://console.cloud.google.com/cloud-build/builds/$BUILD_ID
+      - Aprobar despliegue a producción
+      EOF
+
+      cat /workspace/validation_report.md

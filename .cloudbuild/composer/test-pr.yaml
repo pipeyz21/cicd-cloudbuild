@@ -1,0 +1,19 @@
+---
+steps:
+  # 1. Instalar dependencias
+  - name: 'python:3.11'
+    id: 'install-deps'
+    entrypoint: 'pip'
+    args: ['install', '-r', 'requirements.txt', 'pytest', 'flake8']
+
+  # 2. Linting
+  - name: 'python:3.11'
+    id: 'linting'
+    entrypoint: 'flake8'
+    args: ['dags/', '--max-line-length=127']
+
+  # 3. Tests unitarios
+  - name: 'python:3.11'
+    id: 'unit-tests'
+    entrypoint: 'pytest'
+    args: ['tests/unit/', '-v']
