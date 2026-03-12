@@ -1,6 +1,7 @@
 # tests/unit/example_test.py
-import pytest
+# import pytest
 from airflow.models import DagBag
+
 
 def test_dag_loaded():
     dagbag = DagBag(dag_folder='dags/', include_examples=False)

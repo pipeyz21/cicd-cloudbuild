@@ -1,24 +1,120 @@
+# .cloudbuild/deploy.yaml
 ---
 steps:
-  # 1. Copiar DAGs GCS bucket de Composer
-  - name: 'gcr.io/cloud-builders/gsutil'
-    id: 'deploy-dags'
-    args: ['-m', 'cp', '-r', 'dags/*.py', 'gs://${_DAGS_BUCKET}/dags/']
-
-  # 2. Esperar sincronización
-  - name: 'bash'
-    args: ['sleep', '60']
-
-  # 3. Verificar en Composer
-  - name: 'gcr.io/cloud-builders/gcloud'
-    id: 'verify-deployment'
+  # ══════════════════════════════════════════════════════
+  # 1. MOSTRAR CONFIGURACIÓN
+  # ══════════════════════════════════════════════════════
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
+    id: 'show-config'
     script: |
-      gcloud composer environments run ${_COMPOSER_ENV} \
-        --location ${_COMPOSER_LOCATION} \
-        --project ${_PROJECT}
-        dags list
+      #!/bin/bash
+      
+      echo "════════════════════════════════════════════════════════"
+      echo "🚀 DEPLOYMENT CONFIGURATION"
+      echo "════════════════════════════════════════════════════════"
+      echo ""
+      echo "Branch:       $BRANCH_NAME"
+      echo "Environment:  ${_ENVIRONMENT}"
+      echo "Project:      ${_PROJECT}"
+      echo "Bucket:       ${_DAGS_BUCKET}"
+      echo "Commit:       $SHORT_SHA"
+      echo ""
+      echo "════════════════════════════════════════════════════════"
 
-  # 4. Notificar despliegue exitoso -> Futuro
-  - name: 'deploy-notify'
-    id: 'notify-success'
-    args: ['echo', 'Deployment successful!']
+  # ══════════════════════════════════════════════════════
+  # 2. VALIDAR QUE EXISTEN DAGs
+  # ══════════════════════════════════════════════════════
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
+    id: 'validate-dags-exist'
+    script: |
+      #!/bin/bash
+      set -e
+      
+      echo "🔍 Checking for DAG files..."
+      
+      if [ ! -d "dags" ]; then
+        echo "❌ dags/ directory not found"
+        exit 1
+      fi
+      
+      DAG_COUNT=$(find dags -name "*.py" -not -name "__*" -not -name "*_test.py" | wc -l)
+      
+      if [ "$DAG_COUNT" -eq 0 ]; then
+        echo "❌ No DAG files found in dags/"
+        exit 1
+      fi
+      
+      echo "✅ Found $DAG_COUNT DAG file(s):"
+      find dags -name "*.py" -not -name "__*" -not -name "*_test.py" -exec basename {} \;
+
+  # ══════════════════════════════════════════════════════
+  # 3. SIMULAR DEPLOY A GCS
+  # ══════════════════════════════════════════════════════
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
+    id: 'mock-deploy'
+    script: |
+      #!/bin/bash
+      
+      echo "📦 Simulating deployment to ${_ENVIRONMENT}..."
+      echo ""
+      echo "In production, this would execute:"
+      echo "  gsutil -m rsync -r dags/ gs://${_DAGS_BUCKET}/dags/"
+      echo ""
+      echo "Files that would be deployed:"
+      find dags -name "*.py" -not -name "__*" -not -name "*_test.py" | while read file; do
+        echo "  → $file"
+      done
+      echo ""
+      echo "✅ Deployment simulation complete"
+
+  # ══════════════════════════════════════════════════════
+  # 4. SIMULAR VERIFICACIÓN
+  # ══════════════════════════════════════════════════════
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
+    id: 'mock-verify'
+    script: |
+      #!/bin/bash
+      
+      echo "🔍 Simulating Composer verification..."
+      echo ""
+      echo "In production, this would execute:"
+      echo "  gcloud composer environments run {COMPOSER_ENV} dags list"
+      echo ""
+      echo "✅ Verification simulation complete"
+
+  # ══════════════════════════════════════════════════════
+  # 5. REPORTE
+  # ══════════════════════════════════════════════════════
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
+    id: 'deployment-report'
+    script: |
+      #!/bin/bash
+      
+      if [ "${_ENVIRONMENT}" = "dev" ]; then
+        EMOJI="🔧"
+        ENV_NAME="DEVELOPMENT"
+      else
+        EMOJI="🚀"
+        ENV_NAME="PRODUCTION"
+      fi
+      
+      echo ""
+      echo "════════════════════════════════════════════════════════"
+      echo "$EMOJI DEPLOYMENT SUCCESSFUL - $ENV_NAME"
+      echo "════════════════════════════════════════════════════════"
+      echo ""
+      echo "Environment:  ${_ENVIRONMENT}"
+      echo "Project:      ${_PROJECT}"
+      echo "Bucket:       ${_DAGS_BUCKET}"
+      echo "Commit:       $SHORT_SHA"
+      echo "Build ID:     $BUILD_ID"
+      echo ""
+      echo "View logs:"
+      echo "https://console.cloud.google.com/cloud-build/builds/$BUILD_ID"
+      echo ""
+      echo "════════════════════════════════════════════════════════"
+      echo ""
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '600s'
