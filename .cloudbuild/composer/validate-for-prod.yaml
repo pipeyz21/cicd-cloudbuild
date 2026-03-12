@@ -74,3 +74,6 @@ steps:
       EOF
 
       cat /workspace/validation_report.md
+
+options:
+  logging: CLOUD_LOGGING_ONLY

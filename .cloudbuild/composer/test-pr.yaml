@@ -3,17 +3,42 @@ steps:
   # 1. Instalar dependencias
   - name: 'python:3.11'
     id: 'install-deps'
-    entrypoint: 'pip'
-    args: ['install', '-r', 'requirements.txt', 'pytest', 'flake8']
+    script: |
+      set -e
+      # Instalar en directorio compartido
+      pip install --target=/workspace/python-deps \
+        flake8 pytest pytest-cov
+      
+      # Instalar dependencias del proyecto
+      pip install --target=/workspace/python-deps \
+        -r requirements.txt
 
   # 2. Linting
   - name: 'python:3.11'
     id: 'linting'
-    entrypoint: 'flake8'
-    args: ['dags/', '--max-line-length=127']
+    script: |
+      #!/bin/bash
+      set -e
+      
+      # Agregar al PYTHONPATH
+      export PYTHONPATH="/workspace/python-deps:$PYTHONPATH"
+      
+      # Ejecutar flake8 como módulo
+      python -m flake8 dags/ --max-line-length=127 --count
 
   # 3. Tests unitarios
   - name: 'python:3.11'
     id: 'unit-tests'
-    entrypoint: 'pytest'
-    args: ['tests/unit/', '-v']
+    script: |
+      #!/bin/bash
+      set -e
+      
+      export PYTHONPATH="/workspace/python-deps:$PYTHONPATH"
+      export AIRFLOW_HOME=/workspace/airflow
+      
+      python -m pytest tests/unit/ -v
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '300s'
