@@ -1,11 +1,10 @@
-# .cloudbuild/deploy-composer.yaml
-# VERSIÓN PARA TESTING SIN COMPOSER
+# .cloudbuild/deploy.yaml
 ---
 steps:
   # ══════════════════════════════════════════════════════
   # 1. MOSTRAR CONFIGURACIÓN
   # ══════════════════════════════════════════════════════
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
     id: 'show-config'
     script: |
       #!/bin/bash
@@ -25,7 +24,7 @@ steps:
   # ══════════════════════════════════════════════════════
   # 2. VALIDAR QUE EXISTEN DAGs
   # ══════════════════════════════════════════════════════
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
     id: 'validate-dags-exist'
     script: |
       #!/bin/bash
@@ -49,9 +48,9 @@ steps:
       find dags -name "*.py" -not -name "__*" -not -name "*_test.py" -exec basename {} \;
 
   # ══════════════════════════════════════════════════════
-  # 3. SIMULAR DEPLOY A GCS (sin hacer deploy real)
+  # 3. SIMULAR DEPLOY A GCS
   # ══════════════════════════════════════════════════════
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
     id: 'mock-deploy'
     script: |
       #!/bin/bash
@@ -69,9 +68,9 @@ steps:
       echo "✅ Deployment simulation complete"
 
   # ══════════════════════════════════════════════════════
-  # 4. SIMULAR VERIFICACIÓN EN COMPOSER
+  # 4. SIMULAR VERIFICACIÓN
   # ══════════════════════════════════════════════════════
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
     id: 'mock-verify'
     script: |
       #!/bin/bash
@@ -79,14 +78,14 @@ steps:
       echo "🔍 Simulating Composer verification..."
       echo ""
       echo "In production, this would execute:"
-      echo "  gcloud composer environments run ${_COMPOSER_ENV} dags list"
+      echo "  gcloud composer environments run {COMPOSER_ENV} dags list"
       echo ""
       echo "✅ Verification simulation complete"
 
   # ══════════════════════════════════════════════════════
-  # 5. GENERAR REPORTE DE DEPLOYMENT
+  # 5. REPORTE
   # ══════════════════════════════════════════════════════
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/gcloud'  # ← Cambiar aquí
     id: 'deployment-report'
     script: |
       #!/bin/bash
@@ -115,14 +114,6 @@ steps:
       echo ""
       echo "════════════════════════════════════════════════════════"
       echo ""
-
-substitutions:
-  _ENVIRONMENT: 'unknown'
-  _PROJECT: 'unknown'
-  _COMPOSER_ENV: 'mock-composer'
-  _DAGS_BUCKET: 'mock-bucket'
-  _LOCATION: 'us-central1'
-
 options:
   logging: CLOUD_LOGGING_ONLY
 

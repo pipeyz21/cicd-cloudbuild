@@ -109,7 +109,7 @@ steps:
   # ══════════════════════════════════════════════════════
   # 4. SIMULACIÓN DE VALIDACIÓN EN COMPOSER (MOCK)
   # ══════════════════════════════════════════════════════
-  - name: 'bash'
+  - name: 'gcr.io/cloud-builders/gcloud' 
     id: 'mock-composer-validation'
     script: |
       #!/bin/bash
